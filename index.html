@@ -37,13 +37,12 @@
         document.getElementById('root').style.display = 'block';
 
         var POLLING_INTERVAL = 3000;
-        var buildHookURL = extension.parameters.instance.buildHookURL;
-        var apiToken = extension.parameters.instance.apiToken;
-        var codeBuildProjectName =
-          extension.parameters.instance.codeBuildProjectName;
+        var awsBuildHookURL = extension.parameters.instance.awsBuildHookURL;
+        var codePipelineProjectName =
+          extension.parameters.instance.codePipelineProjectName;
 
         function triggerBuild() {
-          return window.fetch(buildHookURL, {
+          return window.fetch(awsBuildHookURL, {
             method: 'POST'
           });
         }
@@ -55,63 +54,28 @@
         var site = document.getElementById('site');
 
         function checkStatuses() {
-          if (codeBuildProjectName && apiToken) {
+          if (codePipelineProjectName) {
             window
-              .fetch(
-                'https://api.netlify.com/api/v1/sites/' +
-                  codeBuildProjectName +
-                  '?access_token=' +
-                  apiToken
-              )
+              .fetch(awsBuildHookURL + '/status/' + codePipelineProjectName)
               .then(function(response) {
                 return response.json();
               })
               .then(function(data) {
-                var markup =
-                  '<a target="_blank" href=' +
-                  data.url +
-                  '>' +
-                  data.url +
-                  '</a>';
+                console.log('DATA', data);
+                // var markup =
+                //   '<a target="_blank" href=' +
+                //   data.url +
+                //   '>' +
+                //   data.url +
+                //   '</a>';
 
-                site.innerHTML = markup;
-              });
-            window
-              .fetch(
-                'https://api.netlify.com/api/v1/sites/' +
-                  codeBuildProjectName +
-                  '/deploys?access_token=' +
-                  apiToken
-              )
-              .then(function(response) {
-                return response.json();
-              })
-              .then(function(data) {
-                console.log(data);
-                var markup = data
-                  .slice(0, 5)
-                  .map(function(item) {
-                    return [
-                      '<li><a target="_blank" href="https://app.netlify.com/sites/' +
-                        item.name +
-                        '/deploys/' +
-                        item.id +
-                        '">',
-                      new Date(item['created_at']).toLocaleString(),
-                      ' - ',
-                      'State: ' + item.state,
-                      '</a></li>'
-                    ].join('');
-                  })
-                  .join('');
-                history.innerHTML = markup;
-                //extension.window.updateHeight()
+                // site.innerHTML = markup;
               });
           }
         }
 
         function startPollingStatuses() {
-          if (codeBuildProjectName && apiToken) {
+          if (codePipelineProjectName) {
             if (interval) {
               window.clearInterval(interval);
             }
@@ -122,7 +86,7 @@
 
         triggerBuildBtn.addEventListener('click', function() {
           triggerBuild().then(function(data) {
-            infoBox.innerHTML = 'The build is triggered!';
+            infoBox.innerHTML = 'The build is started!';
             startPollingStatuses();
           });
         });

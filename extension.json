@@ -1,16 +1,16 @@
 {
-  "id": "build-netlify",
-  "name": "Netlify - build manually",
+  "id": "build-aws-preview",
+  "name": "AWS - build manually",
   "srcdoc": "./index.html",
   "fieldTypes": ["Symbol"],
   "sidebar": true,
   "parameters": {
     "instance": [
       {
-        "id": "netlifyBuildHookURL",
+        "id": "awsBuildHookURL",
         "type": "Symbol",
-        "name": "Netlify Build Hook URL",
-        "description": "The Netlify Build Hook URL that will be triggered once the user clicks on the build button.",
+        "name": "AWS CodePipeline build hook URL",
+        "description": "The webhook URL that will be triggered once the user clicks on the build button.",
         "required": true
       },
       {
@@ -30,16 +30,10 @@
         "default": "all"
       },
       {
-        "id": "netlifyPAT",
+        "id": "codePipelineProjectName",
         "type": "Symbol",
-        "name": "Netlify Personal Access Token",
-        "description": "Generate a personal access token on Netlify. Be CAREFUL with exposing this token, this extension is for demo purpose only."
-      },
-      {
-        "id": "netlifySiteId",
-        "type": "Symbol",
-        "name": "Netlify Site API ID",
-        "description": "Get the API ID on the settings page of your site"
+        "name": "CodePipeline name",
+        "description": "The AWS CodePipeline name"
       }
     ]
   }
