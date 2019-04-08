@@ -38,13 +38,16 @@
 
         var POLLING_INTERVAL = 3000;
         var awsBuildHookURL = extension.parameters.instance.awsBuildHookURL;
-        var codePipelineProjectName =
-          extension.parameters.instance.codePipelineProjectName;
+        var codepipelineProjectName =
+          extension.parameters.instance.codepipelineProjectName;
 
         function triggerBuild() {
-          return window.fetch(awsBuildHookURL, {
-            method: 'POST'
-          });
+          return window.fetch(
+            `${awsBuildHookURL}?name=${codepipelineProjectName}`,
+            {
+              method: 'GET'
+            }
+          );
         }
 
         var interval = null;
@@ -52,30 +55,30 @@
         var infoBox = document.getElementById('infoBox');
         var history = document.getElementById('history');
         var site = document.getElementById('site');
+        var executionId;
 
         function checkStatuses() {
-          if (codePipelineProjectName) {
-            window
-              .fetch(awsBuildHookURL + '/status/' + codePipelineProjectName)
-              .then(function(response) {
-                return response.json();
-              })
-              .then(function(data) {
-                console.log('DATA', data);
-                // var markup =
-                //   '<a target="_blank" href=' +
-                //   data.url +
-                //   '>' +
-                //   data.url +
-                //   '</a>';
-
-                // site.innerHTML = markup;
-              });
-          }
+          // if (codepipelineProjectName) {
+          //   window
+          //     .fetch(awsBuildHookURL + codepipelineProjectName)
+          //     .then(function(response) {
+          //       return response.json();
+          //     })
+          //     .then(function(data) {
+          //       console.log('DATA', data);
+          //       // var markup =
+          //       //   '<a target="_blank" href=' +
+          //       //   data.url +
+          //       //   '>' +
+          //       //   data.url +
+          //       //   '</a>';
+          //       // site.innerHTML = markup;
+          //     });
+          // }
         }
 
         function startPollingStatuses() {
-          if (codePipelineProjectName) {
+          if (codepipelineProjectName) {
             if (interval) {
               window.clearInterval(interval);
             }
@@ -85,10 +88,15 @@
         }
 
         triggerBuildBtn.addEventListener('click', function() {
-          triggerBuild().then(function(data) {
-            infoBox.innerHTML = 'The build is started!';
-            startPollingStatuses();
-          });
+          triggerBuild()
+            .then(function(data) {
+              infoBox.innerHTML = 'The build has started!';
+              startPollingStatuses();
+              return response.json();
+            })
+            .then(function(data) {
+              console.log('BUILD TRIGGER DATA', data);
+            });
         });
 
         checkStatuses();
