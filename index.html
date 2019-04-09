@@ -55,7 +55,7 @@
         var infoBox = document.getElementById('infoBox');
         var history = document.getElementById('history');
         var site = document.getElementById('site');
-        var executionId;
+        var pipelineExecutionId;
 
         function checkStatuses() {
           // if (codepipelineProjectName) {
@@ -96,6 +96,8 @@
             })
             .then(function(data) {
               console.log('BUILD TRIGGER DATA', data);
+              const parsedData = JSON.parse(data);
+              pipelineExecutionId = parsedData;
             });
         });
 
