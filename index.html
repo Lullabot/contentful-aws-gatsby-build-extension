@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <script src="https://unpkg.com/contentful-ui-extensions-sdk@3"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <link
       rel="stylesheet"
       href="https://unpkg.com/contentful-ui-extensions-sdk@3/dist/cf-extension.css"
@@ -28,9 +29,7 @@
   <body style="margin: 0;">
     <div id="root" style="display:none">
       <button id="triggerBuild" class="cf-btn-primary">Build Preview</button>
-      <div id="infoBox" style="margin-top: 10px"></div>
-      <div id="site" style="margin-top: 10px"></div>
-      <ul id="history" style="margin-top: 10px; padding-left: 15px;"></ul>
+      <div id="infoBox" style="margin-top: 10px; font-weight: bold"></div>
     </div>
     <script>
       function showExtension(extension) {
@@ -39,45 +38,49 @@
         var POLLING_INTERVAL = 3000;
         var awsBuildHookURL = extension.parameters.instance.awsBuildHookURL;
         var codepipelineProjectName =
-          extension.parameters.instance.codepipelineProjectName;
+          extension.parameters.instance.codePipelineProjectName;
 
         function triggerBuild() {
-          return window.fetch(
-            `${awsBuildHookURL}?name=${codepipelineProjectName}`,
-            {
-              method: 'GET'
-            }
+          return axios(
+            `${awsBuildHookURL}/start?name=${codepipelineProjectName}`
           );
         }
 
         var interval = null;
         var triggerBuildBtn = document.getElementById('triggerBuild');
         var infoBox = document.getElementById('infoBox');
-        var history = document.getElementById('history');
-        var site = document.getElementById('site');
         var pipelineExecutionId;
 
         function checkStatuses() {
-          // if (codepipelineProjectName) {
-          //   window
-          //     .fetch(awsBuildHookURL + codepipelineProjectName)
-          //     .then(function(response) {
-          //       return response.json();
-          //     })
-          //     .then(function(data) {
-          //       console.log('DATA', data);
-          //       // var markup =
-          //       //   '<a target="_blank" href=' +
-          //       //   data.url +
-          //       //   '>' +
-          //       //   data.url +
-          //       //   '</a>';
-          //       // site.innerHTML = markup;
-          //     });
-          // }
+          if (codepipelineProjectName && pipelineExecutionId) {
+            axios(
+              `${awsBuildHookURL}/status?name=${codepipelineProjectName}&id=${pipelineExecutionId}`
+            ).then(function(data) {
+              console.log('PIPELINE CHECK', data);
+              if (data.data.pipelineExecution.status === 'Succeeded') {
+                window.clearInterval(interval);
+                triggerBuildBtn.innerHTML = 'Build Preview';
+                triggerBuildBtn.disabled = false;
+                infoBox.innerHTML = 'Build complete!';
+                setTimeout(function() {
+                  infoBox.innerHTML = '';
+                }, 15000);
+              }
+              if (data.data.pipelineExecution.status === 'Failed') {
+                window.clearInterval(interval);
+                triggerBuildBtn.innerHTML = 'Build Preview';
+                triggerBuildBtn.disabled = false;
+                infoBox.innerHTML =
+                  'Build failed. See CloudWatch logs for details.';
+                setTimeout(function() {
+                  infoBox.innerHTML = '';
+                }, 15000);
+              }
+            });
+          }
         }
 
-        function startPollingStatuses() {
+        function startPollingStatuses(id) {
           if (codepipelineProjectName) {
             if (interval) {
               window.clearInterval(interval);
@@ -88,20 +91,14 @@
         }
 
         triggerBuildBtn.addEventListener('click', function() {
-          triggerBuild()
-            .then(function(data) {
-              infoBox.innerHTML = 'The build has started!';
-              startPollingStatuses();
-              return response.json();
-            })
-            .then(function(data) {
-              console.log('BUILD TRIGGER DATA', data);
-              const parsedData = JSON.parse(data);
-              pipelineExecutionId = parsedData;
-            });
+          triggerBuild().then(function(data) {
+            triggerBuildBtn.innerHTML = 'Building...';
+            triggerBuildBtn.disabled = true;
+            console.log('DATA', data.data);
+            pipelineExecutionId = data.data;
+            startPollingStatuses();
+          });
         });
-
-        checkStatuses();
       }
 
       window.contentfulExtension.init(function(extension) {
